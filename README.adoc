@@ -1,0 +1,71 @@
+= {Title}
+:title:     packaging
+:author:    Urs Roesch
+:firstname: Urs
+:lastname:  Roesch
+:email:     github@bun.ch
+:revnumber: 0.6
+:keywords:  scripts, shell, bash, gem, rpm, fpm, dpgk, debian, centos, redhat
+:icons:     font
+
+A collection of scripts for easing packaging.
+
+
+[[gem2pkg]]
+== gem2pkg
+
+Invoke as `gem2deb` or `gem2rpm` depending on the target package format.
+
+License:: MIT
+Requires:: bash >= 4, fpm, gem
+
+[[gem2pkg-usage]]
+=== Usage
+
+----
+Usage:
+  gem2deb <options> gem-name [-v <version>] [gem-name -v [<version>]  [..]]
+
+Options:
+  --help              This message
+  --dest-dir <path>   Set the destination directory for the finished packages
+  --sub-dir  <dir>    Set the subdirectory under ~/var/gem2deb for
+                        saving the packages
+  --prerelease        Consider prerelases of gems
+  gem -v |--version   set the version of the gem to install
+----
+
+[[gem2pkg-examples]]
+=== Examples
+
+.Create debian package for asciidoctor gem and its dependencies. Packages are saved under `~/var/gem2deb/<codename>`
+----
+gem2deb asciidoctor
+----
+
+.Create rpm package for rspec version 3.5.0. Packages are saved under `~/var/gem2deb/<codename>`
+----
+gem2rpm rspec -v 3.5.0
+----
+
+.Create debian package for asciidoctor-pdf taking into consideration prerelease versions.
+----
+gem2deb --prerelease asciidoctor-pdf
+----
+
+.Create multiple rpm packages where asciidoctor will use the latest version but rspec takes version 3.5.0.
+----
+gem2rpm asciidoctor rspec -v 3.5.0
+----
+
+.Create rpm package for rspec version 3.5.0. Packages are saved under `~/my-rubygems/<codename>`
+----
+gem2rpm --dest-dir ~/my-rubygems rspec -v 3.5.0
+----
+
+.Create debian package for rspec version 3.5.0. Packages are saved under `~/my-rubygems/rspec/<codename>`
+----
+gem2deb --sub-dir rspec --dest-dir ~/my-rubygems rspec -v 3.5.0
+----
+
+<<<
