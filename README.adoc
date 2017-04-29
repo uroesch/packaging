@@ -14,7 +14,9 @@ A collection of scripts for easing packaging.
 [[gem2pkg]]
 == gem2pkg
 
-Invoke as `gem2deb` or `gem2rpm` depending on the target package format.
+A script easing the generation of ruby gems into native packages.
+
+_Note_: Invoke as `gem2deb` or `gem2rpm` depending on the target package format.
 
 License:: MIT
 Requires:: bash >= 4, fpm, gem
@@ -69,3 +71,40 @@ gem2deb --sub-dir rspec --dest-dir ~/my-rubygems rspec -v 3.5.0
 ----
 
 <<<
+
+[[rake]]
+== Rake
+
+A collection of rake scripts to help with the build of various useful tools missing from the
+distribution repos.
+
+License:: MIT
+Requires:: ruby, rake
+
+The scripts are organzied into two sections:
+
+bootstrap:: Builds and installs the necessary tools for packaging the tasks grouped under `package`
+package:: Builds packages for Debian or RedHat based operating systems.
+
+[[rake-usage]]
+=== Usage
+.Show all tasks by invoking `rake -T`
+----
+rake bootstrap:fpm        # Build and deploy the fpm command
+rake package:butteraugli  # Build the butteraugli image comparison tool
+rake package:guetzli      # Build the guetzli jpeg compressor
+rake package:zopflipng    # Build the zopflipng PNG optimizer
+----
+
+[[rake-examples]]
+=== Examples
+
+.Build and install the fpm dependency as native packages
+----
+rake bootstrap:fpm
+----
+
+.Build the butteraugli image comparison tool. Saves the packages under `../packages/<codename>`
+----
+rake package:butteraugli
+----
