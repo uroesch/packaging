@@ -35,6 +35,7 @@ FPM_ARGS=(
  -d ruby
  --prefix $(gem environment gemdir)
  --epoch 0
+ --deb-no-default-config-files
 )
 GEM_OPTS=()
 declare -A GEMS
@@ -88,19 +89,24 @@ usage() {
   cat <<USAGE
 
   Usage:
-    ${SCRIPT} <options> gem-name [-v <version>] [gem-name -v [<version>]  [..]]
+    ${SCRIPT} <options> gem [-v <version>] [gem -v [<version>]  [..]]
 
   Options:
     --help              This message
     --dest-dir <path>   Set the destination directory for the finished packages
-    --sub-dir  <dir>    Set the subdirectory under ${OUT_DIR} for saving the
-                        packages
+    --sub-dir  <dir>    Set the subdirectory under ${OUT_DIR}
+                        for saving the packages
     --prerelease        Consider prerelases of gems
-    gem -v |--version   set the version of the gem to install
+    gem -v |--version   Set the version of the gem to install.
+                        Gem can either be file or the name of the gem.
+                        The version switch is ignored if pointing to a gem file.
 
   Examples:
     Create package of the the my-gem in version 0.1
     ${SCRIPT} my-gem -v 0.1
+
+    Create package of the the ~/my-gem-0.1.gem file
+    ${SCRIPT} ~/my-gem-0.1.gem
 
 USAGE
   exit ${exit_code}
@@ -118,14 +124,14 @@ parse_opts() {
       --prerelease) GEM_OPTS=( ${GEM_OPTS[@]-} $1);;
       -*)           usage 1;;
       *)
-	 gem=$1;
-         version=''
-         if [[ $# -gt 1 && ${2:0:1} == - ]]; then
-	   version="$3"
-	   shift 2;
-         fi
-         GEMS[${gem}]="${version}"
-	 ;;
+        gem=$1;
+        version=''
+        if [[ $# -gt 1 && ${2:0:1} == - ]]; then
+          version="$3"
+          shift 2;
+        fi
+        GEMS[${gem}]="${version}"
+        ;;
     esac
     shift
   done
@@ -148,20 +154,36 @@ install_gem() {
   local gem="$1"; shift;
   local version="$1"; shift;
 
-  gem install \
-    ${GEM_OPTS[@]} \
-    ${version:+-v ${version}} \
-    ${gem} \
-    --install-dir ${WORK_DIR}/${gem} \
-    --no-ri \
-    --no-rdoc
+  if [[ -f "${gem}" ]]; then
+    return
+  else
+    gem install \
+      ${GEM_OPTS[@]} \
+      ${version:+-v ${version}} \
+      ${gem} \
+      --install-dir ${WORK_DIR}/${gem} \
+      --no-ri \
+      --no-rdoc
+  fi
+}
+
+## ----------------------------------------------------------------------------
+
+gather_gems() {
+  local gem="$1"; shift;
+  if [[ -f "${gem}" ]]; then
+    echo "${gem}"
+  else
+    find ${WORK_DIR}/${gem}/cache -name '*.gem'
+  fi
 }
 
 ## ----------------------------------------------------------------------------
 
 wrap_package() {
+  local gem="$1"; shift;
   cd ${OUT_DIR}/${SUB_DIR}/${DIST_NAME} &&
-    find ${WORK_DIR}/${gem}/cache -name '*.gem' | \
+    gather_gems "${gem}" |
     xargs -rn1 fpm \
       ${FPM_ARGS[@]} \
       -s gem \
@@ -175,7 +197,7 @@ make_packages() {
   for gem in ${!GEMS[@]}; do
     mkdir -p ${WORK_DIR}/${gem}
     install_gem "${gem}" "${GEMS[${gem}]}"
-    wrap_package
+    wrap_package "${gem}"
   done
 }
 

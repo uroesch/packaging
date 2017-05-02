@@ -25,16 +25,17 @@ Requires:: bash >= 4, fpm, gem
 === Usage
 
 ----
-Usage:
-  gem2deb <options> gem-name [-v <version>] [gem-name -v [<version>]  [..]]
+gem2deb <options> gem [-v <version>] [gem -v [<version>]  [..]]
 
 Options:
   --help              This message
   --dest-dir <path>   Set the destination directory for the finished packages
-  --sub-dir  <dir>    Set the subdirectory under ~/var/gem2deb for
-                        saving the packages
+  --sub-dir  <dir>    Set the subdirectory under ~/gem2deb
+                      for saving the packages
   --prerelease        Consider prerelases of gems
-  gem -v |--version   set the version of the gem to install
+  gem -v |--version   Set the version of the gem to install.
+                      Gem can either be file or the name of the gem.
+                      The version switch is ignored if pointing to a gem file.
 ----
 
 [[gem2pkg-examples]]
@@ -65,9 +66,9 @@ gem2rpm asciidoctor rspec -v 3.5.0
 gem2rpm --dest-dir ~/my-rubygems rspec -v 3.5.0
 ----
 
-.Create debian package for rspec version 3.5.0. Packages are saved under `~/my-rubygems/rspec/<codename>`
+.Create debian package for rspec version 3.5.0 and ascidoctor from a previously downloaded gem file. Packages are saved under `~/my-rubygems/rspec/<codename>`
 ----
-gem2deb --sub-dir rspec --dest-dir ~/my-rubygems rspec -v 3.5.0
+gem2deb --sub-dir rspec --dest-dir ~/my-rubygems rspec -v 3.5.0 ~/asciidoctor-1.5.5.gem
 ----
 
 <<<
