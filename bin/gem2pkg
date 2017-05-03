@@ -154,24 +154,20 @@ install_gem() {
   local gem="$1"; shift;
   local version="$1"; shift;
 
-  if [[ -f "${gem}" ]]; then
-    return
-  else
-    gem install \
-      ${GEM_OPTS[@]} \
-      ${version:+-v ${version}} \
-      ${gem} \
-      --install-dir ${WORK_DIR}/${gem} \
-      --no-ri \
-      --no-rdoc
-  fi
+  gem install \
+    ${GEM_OPTS[@]} \
+    ${version:+-v ${version}} \
+    ${gem} \
+    --install-dir ${WORK_DIR}/${gem} \
+    --no-ri \
+    --no-rdoc
 }
 
 ## ----------------------------------------------------------------------------
 
 gather_gems() {
   local gem="$1"; shift;
-  if [[ -f "${gem}" ]]; then
+  if [[ -f ${gem} ]]; then
     echo "${gem}"
   else
     find ${WORK_DIR}/${gem}/cache -name '*.gem'
@@ -195,8 +191,12 @@ wrap_package() {
 
 make_packages() {
   for gem in ${!GEMS[@]}; do
-    mkdir -p ${WORK_DIR}/${gem}
-    install_gem "${gem}" "${GEMS[${gem}]}"
+    if [[ -f "${gem}" ]]; then
+      gem="$(readlink -f "${gem}")"
+    else
+      mkdir -p ${WORK_DIR}/${gem}
+      install_gem "${gem}" "${GEMS[${gem}]}"
+    fi
     wrap_package "${gem}"
   done
 }
