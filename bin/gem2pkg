@@ -155,7 +155,7 @@ install_gem() {
   local version="$1"; shift;
 
   gem install \
-    ${GEM_OPTS[@]} \
+    ${GEM_OPTS[@]-} \
     ${version:+-v ${version}} \
     ${gem} \
     --install-dir ${WORK_DIR}/${gem} \
@@ -178,13 +178,15 @@ gather_gems() {
 
 wrap_package() {
   local gem="$1"; shift;
-  cd ${OUT_DIR}/${SUB_DIR}/${DIST_NAME} &&
-    gather_gems "${gem}" |
-    xargs -rn1 fpm \
-      ${FPM_ARGS[@]} \
-      -s gem \
-      -t ${TARGET} \
-      ${RPM_DIST:+--rpm-dist ${RPM_DIST}}
+  (
+    cd ${OUT_DIR}/${SUB_DIR}/${DIST_NAME} &&
+      gather_gems "${gem}" |
+      xargs -rn1 fpm \
+        ${FPM_ARGS[@]} \
+        -s gem \
+        -t ${TARGET} \
+        ${RPM_DIST:+--rpm-dist ${RPM_DIST}}
+  )
 }
 
 ## ----------------------------------------------------------------------------
