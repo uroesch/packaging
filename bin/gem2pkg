@@ -55,14 +55,15 @@ export PATH
 ## ----------------------------------------------------------------------------
 get_dist() {
   case ${TARGET} in
-    rpm) get_rpm_dist;;
-    deb) get_deb_dist;;
+    rpm) set_rpm_env;;
+    deb) set_deb_env;;
+    apk) set_apk_env;;
   esac
 }
 
 ## ----------------------------------------------------------------------------
 
-get_deb_dist() {
+set_deb_env() {
   if which lsb_release &>/dev/null; then
     DEB_DIST=$(lsb_release -c | awk '{print $2}')
     DIST_NAME=${DEB_DIST}
@@ -71,7 +72,7 @@ get_deb_dist() {
 
 ## ----------------------------------------------------------------------------
 
-get_rpm_dist() {
+set_rpm_env() {
   rhel_release=/etc/redhat-release
   if [[ -f ${rhel_release} ]]; then
     version=$( sed 's/[^0-9.]//g' ${rhel_release} )
@@ -80,6 +81,23 @@ get_rpm_dist() {
       DIST_NAME=${RPM_DIST}
     fi
   fi
+}
+
+## ----------------------------------------------------------------------------
+
+set_apk_env() {
+  alpine_release=/etc/alpine-release
+  arch=$(uname -p)
+  if [[ -f ${alpine_release} ]]; then
+    version=$( cut -f 1-2 -d . ${alpine_release} )
+    if [[ -n ${version} ]]; then
+      DIST_NAME=alpine-${version}
+    fi
+  fi
+  ## ensure the subdir contains the arch
+  ## because the standard package name doesn't
+  SUB_DIR=${SUB_DIR:+${arch}/${SUB_DIR}}
+  SUB_DIR=${SUB_DIR:-${arch}}
 }
 
 ## ----------------------------------------------------------------------------
