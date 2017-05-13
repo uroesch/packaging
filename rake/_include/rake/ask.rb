@@ -47,6 +47,7 @@ module Rake
     end
 
     def os
+      ## debian based
       lsb_release = `which lsb_release 2>/dev/null`.strip
       if ! lsb_release.empty?
         @os_name        = `#{lsb_release} -s -i`.strip
@@ -55,7 +56,8 @@ module Rake
         @os_major       = @os_relase.to_i
         @os_codename    = `#{lsb_release} -s -c`.strip
         @os_dist        = @os_codename
-      else File.exist?('/etc/redhat-release')
+      ## centos, rhel, fedora
+      elsif File.exist?('/etc/redhat-release')
         content = File.open('/etc/redhat-release').readline.strip
         content.match(%r{^(.+?)\s.+?([\d.]+)\s+\((.*)\)})
         @os_name        = $1
@@ -64,6 +66,15 @@ module Rake
         @os_major       = @os_relase.to_i
         which_osdist
         @os_codename    = @os_dist
+      ## alpine
+      elsif File.exist?('/etc/alpine-release')
+        content = File.open('/etc/alpine-release').readline.strip
+        @os_name        = 'Alpine'
+        @os_description = "Alpine Linux #{content}"
+        @os_relase      = content
+        @os_major       = content == 'edge' ? content : content.to_f.to_s
+        @os_codename    = [@os_name, @os_major].join('-')
+        @os_dist        = [@os_name.downcase, @os_major].join('-')
       end
       which_osfamily
     end
@@ -80,6 +91,10 @@ module Rake
          @local_install = 'rpm -Uvh'
          @net_install   = 'yum -y install' if @os_dist =~ /^el/
          @net_install   = 'dnf -y install' if @os_name == 'Fedora'
+      when 'Alpine'
+         @pkg_target    = 'apk'
+         @local_install = 'apk add --allow-untrusted'
+         @net_install   = 'apk add'
       end
     end
 
@@ -89,6 +104,8 @@ module Rake
                      'Debian'
                    when /Fedora|RedHat|CentOS/i
                      'RedHat'
+                   when /Alpine/i
+                     'Alpine'
                    else
                      'unknown'
                    end
