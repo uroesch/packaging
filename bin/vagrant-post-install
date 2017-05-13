@@ -1,0 +1,47 @@
+#!/bin/bash
+
+SCRIPT=${0##*/}
+VAGRANT_DATA=$( cd $(dirname $0)/..; pwd )
+RAKE_DIR=${VAGRANT_DATA}/rake
+PACKAGE_DIR=${VAGRANT_DATA}/packages
+
+## debian based
+if which apt-get &>/dev/null; then
+  codename=$( lsb_release -i -s | tr "[A-Z]" "[a-z]")
+  relase=$( lsb_release -r -s)
+  packages=" ruby ruby-dev rake git "
+  if [[ ${codename} == ubuntu ]]; then
+    case ${relase} in
+      14.04) packages="${packages} rubygems-integration";;
+      *)     packages="${packages} rubygems";;
+    esac
+  fi
+  apt-get update
+  apt-get -y install ${packages}
+## alpine
+elif which apk &>/dev/null; then
+  apk add ruby ruby-rake
+## centos and rhel
+elif which yum &>/dev/null; then
+  packages=" ruby ruby-devel rubygems rpm-build git "
+  major=$( sed 's/[^0-9.]//g; s/\..*//g' /etc/redhat-release )
+  case ${major} in
+    6) packages="${packages} rubygem-rake";;
+    *) packages="${packages} rake";;
+  esac
+  yum -y install ${packages}
+## fedora
+elif which dnf &>/dev/null; then
+  dnf -y install ruby ruby-devel rubygems rake rpm-build git
+fi
+
+cd ${RAKE_DIR} && (
+  rake bootstrap:fpm
+  rake bootstrap:rake
+  for pkg in $(rake -T package: | awk '{print $2}'); do
+    rake $pkg
+  done
+)
+#  rake package:butteraugli
+#  rake -f guetzli.rake
+#  rake -f zopflipng.rake
