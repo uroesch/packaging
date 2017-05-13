@@ -45,6 +45,13 @@ namespace :bootstrap do
     end
 
     dependencies = {
+      :alpine => %w(
+        bash
+        build-base
+        libffi-dev
+        paxctl
+        ruby-dev        
+      ),
       :debian => %w(
         build-essential
         dh-autoreconf
