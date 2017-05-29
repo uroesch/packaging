@@ -89,6 +89,8 @@ module Rake
       @port = case @arch
               when /x86_64/i
                 'amd64'
+              when /armv6l/i
+                'arm'
               else
                 @arch
               end
