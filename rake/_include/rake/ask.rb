@@ -7,6 +7,7 @@ module Rake
     attr_reader :system,
       :kernel,
       :arch,
+      :port,
       :os_name,
       :os_description,
       :os_release,
@@ -33,9 +34,10 @@ module Rake
     private
 
     def system_type
-      @system = `uname -s`.strip
-      @kernel = `uname -r`.strip
-      @arch   = `uname -m`.strip
+      @system   = `uname -s`.strip
+      @kernel   = `uname -r`.strip
+      @arch     = `uname -m`.strip
+      which_port
     end
 
     def ruby
@@ -81,6 +83,15 @@ module Rake
          @net_install   = 'yum -y install' if @os_dist =~ /^el/
          @net_install   = 'dnf -y install' if @os_name == 'Fedora'
       end
+    end
+
+    def which_port
+      @port = case @arch
+              when /x86_64/i
+                'amd64'
+              else
+                @arch
+              end
     end
 
     def which_osfamily
