@@ -6,7 +6,7 @@ namespace :package do
 
     ask           = Rake::Ask.new
     name          = 'restic'
-    version       = '0.6.0'
+    version       = ENV['VERSION'] || '0.8.0'
     basename      = "#{name}_#{version}_linux_#{ask.port}.bz2"
     download      = "https://github.com/#{name}/#{name}/releases/download/v#{version}/#{basename}"
     base_dir      = File.join(ENV['HOME'], 'var', 'tmp', 'build')
@@ -56,11 +56,24 @@ namespace :package do
       cd dest_dir
       mv File.join(build_dir, basename.ext), 'usr/local/bin/restic'
       chmod 0755, 'usr/local/bin/restic'
-      sh %(usr/local/bin/restic autocomplete ) +
-	 %(--completionfile etc/bash_completion.d/restic.sh)
     end
 
-    task :package => :install do
+    task :postinstall => :install do
+      cd dest_dir
+      case
+      when version.to_f <= 0.7
+        sh %(usr/local/bin/restic autocomplete ) +
+	         %(--completionfile etc/bash_completion.d/restic.sh)
+      when version.to_f >= 0.8
+        man1dir = File.join(mandir[1..-1], 'man1')
+        sh %(usr/local/bin/restic generate ) +
+	         %(--bash-completion etc/bash_completion.d/restic.sh)
+        mkdir_p man1dir
+        sh %(usr/local/bin/restic generate --man #{man1dir})
+      end
+    end
+
+    task :package => :postinstall do
       cd build_dir
       mkdir_p ask.pkg_dir
       cd ask.pkg_dir
@@ -77,5 +90,5 @@ namespace :package do
   end
 end
 
-desc 'Package the restic cloud backup application'
+desc 'Package the restic cloud backup application; Options: VERSION=X.X.X'
 task 'package:restic' => 'package:restic:default'
