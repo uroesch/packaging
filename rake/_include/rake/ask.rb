@@ -15,6 +15,7 @@ module Rake
       :os_codename,
       :os_dist,
       :os_family,
+      :os_init,
       :pkg_target,
       :pkg_dir,
       :local_install,
@@ -57,6 +58,7 @@ module Rake
         @os_major       = @os_relase.to_i
         @os_codename    = `#{lsb_release} -s -c`.strip
         @os_dist        = @os_codename
+        @os_init        = File.exist?('/etc/os-release') ? 'systemd' : 'init'
       else File.exist?('/etc/redhat-release')
         content = File.open('/etc/redhat-release').readline.strip
         content.match(%r{^(.+?)\s.+?([\d.]+)\s+\((.*)\)})
@@ -66,6 +68,7 @@ module Rake
         @os_major       = @os_relase.to_i
         which_osdist
         @os_codename    = @os_dist
+        @os_init        = File.exist?('/etc/os-release') ? 'systemd' : 'init'
       end
       which_osfamily
     end
