@@ -1,7 +1,7 @@
 require 'rake/ask'
 namespace :package do
   namespace :netdata do
-    task :default => :package
+    task :default => :install
 
     ask         = Rake::Ask.new
     name        = 'netdata'
@@ -11,7 +11,8 @@ namespace :package do
     dest_dir    = File.join(base_dir, 'fakeroot')
     prefix      = '/usr'
     mandir      = File.join(prefix, 'share', 'man')
-
+    sources_dir = File.join(ENV['HOME'], 'rpmbuild', 'SOURCES')
+    rpms_dir    = File.join(ENV['HOME'], 'rpmbuild', 'RPMS')
 
     dependencies = {
       :debian => %w(
@@ -41,6 +42,7 @@ namespace :package do
         python-psycopg2
         PyYAML
         zlib-devel
+        rpm-build
       )
     }
 
@@ -48,6 +50,7 @@ namespace :package do
     directory build_dir
     directory dest_dir
     directory ask.pkg_dir
+    directory sources_dir
 
     task :clean do
       rm_rf base_dir
@@ -102,24 +105,38 @@ namespace :package do
       sh %(./configure)
     end
 
-    task :build => :pre_prep do
+    task :build => [:pre_prep, sources_dir] do
       cd build_dir
-      cd 'contrib'
-      sh %(make)
+      case ask.os_family.downcase
+      when 'debian'
+        cd 'contrib'
+        sh %(make)
+      when 'redhat'
+        sh %(make dist)
+        mv Rake::FileList["#{name}-#{$version}.tar.*"], sources_dir
+      else
+        puts "nothing to do"
+      end
     end
 
     task :package => :build do
       cd build_dir
-      sh %(dpkg-buildpackage -us -uc -rfakeroot)
+      case ask.os_family.downcase
+      when 'debian' then sh %(dpkg-buildpackage -us -uc -rfakeroot)
+      when 'redhat' then sh %(rpmbuild -bb netdata.spec)
+      else ''
+      end
     end
 
-    task :install => :build do
-      destination = File.join(dest_dir, 'usr', 'bin')
-      mkdir_p destination
-      cd build_dir
-      cp name, destination
+    task :install => :package do
+      cd base_dir
+      mkdir_p ask.pkg_dir
+      case ask.os_family.downcase
+      when 'debian' then mv Rake::FileList['*.deb'], ask.pkg_dir
+      when 'redhat' then mv Rake::FileList["#{rpms_dir}/**/*.rpm"], ask.pkg_dir
+      else ''
+      end
     end
-
   end
 end
 
