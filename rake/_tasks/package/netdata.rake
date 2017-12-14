@@ -45,6 +45,7 @@ namespace :package do
     }
 
     directory base_dir
+    directory build_dir
     directory dest_dir
     directory ask.pkg_dir
 
@@ -59,7 +60,7 @@ namespace :package do
       )
     end
 
-    task :git_clone => [:check_prerequisites, base_dir] do
+    task :git_clone => [:check_prerequisites, build_dir, base_dir] do
       cd base_dir
       sh %(git clone #{git_url} #{name})
       cd name
@@ -69,13 +70,18 @@ namespace :package do
     end
 
     task :link_debian => :git_clone do
-      return ask.os_family.downcase != 'debian'
       cd build_dir
       ln_s 'contrib/debian', 'debian'
+      begin
+        if ask.os_init != 'init' || ask.os_family.downcase != 'debian'
+          Rake::Task['package:netdata:modify_recipe'].execute
+        end
+      rescue
+        puts :foo
+      end
     end
 
     task :modify_recipe => :link_debian do
-      return ask.os_init != 'init' || ask.os_family.downcase != 'debian'
       sh %(sed -i '/systemd/s/autoreconf,systemd/autoreconf/' ) +
          %(#{build_dir}/debian/rules)
       ## mv build_dir + '/debian/control.wheezy', build_dir + '/debian/control'
@@ -90,13 +96,14 @@ namespace :package do
          %(#{build_dir}/system/netdata.logrotate.in)
     end
 
-    task :pre_prep do
+    task :pre_prep => :link_debian do
       cd build_dir
       sh %(./autogen.sh)
       sh %(./configure)
     end
 
     task :build => :pre_prep do
+      cd build_dir
       cd 'contrib'
       sh %(make)
     end
