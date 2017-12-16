@@ -18,6 +18,7 @@ namespace :package do
         build-essential
         libgflags-dev
         libpng-dev
+	pkg-config
         git
       ),
       :redhat => %w(
@@ -34,6 +35,7 @@ namespace :package do
 
     task :clean do
       rm_rf base_dir
+      Rake::Task[base_dir].reenable
     end
 
     task :supported => :clean do

@@ -22,6 +22,7 @@ namespace :package do
 
     task :clean do
       rm_rf base_dir
+      Rake::Task[base_dir].reenable
     end
 
     task :supported => :clean do

@@ -71,7 +71,9 @@ module Rake
     end
 
     def package_type
-      @pkg_dir = File.join(Rake.original_dir, '..', PKG_DIR, @os_dist)
+      @pkg_dir = ENV['PKG_DIR'] ?
+                 File.join(ENV['PKG_DIR'], @os_dist) :
+                 File.join(Rake.original_dir, '..', PKG_DIR, @os_dist)
       case @os_family
       when 'Debian'
          @pkg_target    = 'deb'

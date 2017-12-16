@@ -26,6 +26,15 @@ rake_files.each { |x| load x }
 
 task :default => :help
 
+desc 'Build all available packages'
+task 'package:ALL' do
+  Rake.application.tasks.each do |task|
+    task.invoke if task.name.match(%r{package:.*?:default})
+  end
+end
+
+task 'package:all' => 'package:ALL'
+
 task :help do
   puts
   puts "Run '#{$0} -T' to see all available tasks"
