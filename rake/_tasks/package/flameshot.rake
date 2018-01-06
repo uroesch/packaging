@@ -69,14 +69,15 @@ namespace :package do
     end
 
     task :build => :git_clone do
-      cd File.join(build_dir, name)
+      cd build_dir
       sh %(qmake CONFIG+=packaging)
       sh %(make)
     end
 
     task :install => :build do
-      cd File.join(build_dir, name)
-      sh %(make DESTDIR=#{dest_dir} install)
+      cd build_dir
+      sh %(qmake CONFIG+=packaging BASEDIR=#{dest_dir})
+      sh %(make install)
     end
 
     task :package => :install do
